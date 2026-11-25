@@ -1,0 +1,51 @@
+name: CI Verify (Build + Smoke Test)
+
+on:
+  push:
+    branches: ["ci/gha-verify"]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build
+
+      - name: Build wheel and sdist
+        run: python -m build
+
+      - name: Install built wheel
+        run: |
+          python -m pip install dist/*.whl
+          python -m pip install pytest polib pygments
+
+      - name: Smoke test
+        run: |
+          python -c "import holidays; print('version:', holidays.__version__)"
+          python -c "import holidays; from datetime import date; cn = holidays.country_holidays('CN', years=2026); print('CN holidays 2026:', len(cn)); print('2026-10-01 is holiday:', date(2026,10,1) in cn)"
+
+      - name: Subset test run
+        run: python -m pytest tests/test_holiday_base.py -q --no-cov
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: holidays-dist
+          path: dist/*
+          retention-days: 7

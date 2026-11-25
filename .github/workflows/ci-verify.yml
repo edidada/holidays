@@ -41,7 +41,7 @@ jobs:
           python -c "import holidays; from datetime import date; cn = holidays.country_holidays('CN', years=2026); print('CN holidays 2026:', len(cn)); print('2026-10-01 is holiday:', date(2026,10,1) in cn)"
 
       - name: Subset test run
-        run: python -m pytest tests/test_holiday_base.py -q --no-cov
+        run: python -m pytest tests/test_holiday_base.py -q -o addopts=""
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -49,3 +49,4 @@ jobs:
           name: holidays-dist
           path: dist/*
           retention-days: 7
+
